@@ -4,19 +4,24 @@ import (
 	"context"
 	"fmt"
 	"log"
+	"os"
 
-	"trading-client-go/restdnse"
+	"dnse-sdk-go/restdnse"
+
+	"github.com/joho/godotenv"
 )
 
 func main() {
-	client := restdnse.NewClient("https://openapi.dnse.com.vn", "your-api-key", "your-api-secret")
+	_ = godotenv.Load()
 
-	// Payload cấu hình khớp lệnh mua chứng khoán cơ sở (STOCK) giống ví dụ python
+	client := restdnse.NewClient("https://openapi.dnse.com.vn", os.Getenv("DNSE_API_KEY"), os.Getenv("DNSE_API_SECRET"))
+
+	// Định dạng map payload đặt lệnh chuẩn khớp với ví dụ python trading-api/post_order.py
 	payload := map[string]interface{}{
 		"accountNo":     "0001000115",
 		"symbol":        "HPG",
-		"side":          "NB", // Mua
-		"orderType":     "LO", // Lệnh Giới hạn
+		"side":          "NB", // NB nghĩa là Mua (New Buy)
+		"orderType":     "LO",
 		"price":         25950,
 		"quantity":      100,
 		"loanPackageId": 2396,
@@ -24,11 +29,11 @@ func main() {
 
 	tradingToken := "replace-with-actual-trading-token"
 
-	// Gọi hàm đặt lệnh
-	res, err := client.PostOrder(context.Background(), "STOCK", payload, tradingToken)
+	var response interface{}
+	err := client.PostOrder(context.Background(), "STOCK", payload, tradingToken, &response)
 	if err != nil {
 		log.Fatalf("Đặt lệnh thất bại: %v", err)
 	}
 
-	fmt.Printf("Kết quả phản hồi đặt lệnh từ sàn DNSE: %+v\n", res)
+	fmt.Printf("Kết quả phản hồi đặt lệnh từ sàn DNSE:\n%v\n", response)
 }
