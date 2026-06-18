@@ -154,26 +154,29 @@ type DNSEOrderRequest struct {
 }
 
 // PlaceOrder nhận thêm tham số marketType để động hóa endpoint
+// PlaceOrder thực hiện đẩy lệnh chính xác lên cổng /accounts/orders kèm Query Params
 func (c *Client) PlaceOrder(ctx context.Context, marketType string, payload DNSEOrderRequest) (string, error) {
-	// Endpoint chuẩn cho cổ phiếu cơ sở cơ bản
 	path := "/accounts/orders"
 
-	// Nếu sau này bạn chơi phái sinh (DERIVATIVES), có thể map path khác tại đây
-	if marketType == "DERIVATIVES" {
-		path = "/derivatives/orders" // Ví dụ theo spec DNSE nếu có
+	// Khởi tạo Query Parameters đúng theo tài liệu đặc tả của DNSE
+	queryParams := map[string]string{
+		"marketType":    marketType, // Sẽ gán thành "STOCK"
+		"orderCategory": "NORMAL",   // Mặc định luôn là NORMAL
 	}
 
-	var result struct {
-		OrderID string `json:"orderId"`
-		Status  string `json:"status"`
-		Message string `json:"message"`
-	}
+	// Sửa kiểu hứng cấu trúc Object trả về dạng bản đồ động hoặc một Struct có ID kiểu int/string
+	var result map[string]interface{}
 
-	err := c.sendRequest(ctx, "POST", path, nil, payload, &result)
+	// Truyền queryParams vào tham số thứ 4 của hàm sendRequest lõi
+	err := c.sendRequest(ctx, "POST", path, queryParams, payload, &result)
 	if err != nil {
-		return "", err
+		return "", fmt.Errorf("đặt lệnh giao dịch thất bại: %w", err)
 	}
 
-	// Trả về OrderID kiểu chuỗi chuẩn khớp với mong đợi của Adapter: result.OrderID
-	return result.OrderID, nil
+	// Đọc trường ID lệnh trả về (Tài liệu ghi trả về số nguyên id hoặc string)
+	if idVal, ok := result["id"]; ok {
+		return fmt.Sprintf("%v", idVal), nil
+	}
+
+	return "SUCCESS", nil
 }
