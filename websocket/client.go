@@ -2,8 +2,13 @@ package websocket
 
 import (
 	"context"
+	"crypto/hmac"
+	"crypto/sha256"
+	"crypto/rand"
+	"encoding/hex"
 	"encoding/json"
 	"fmt"
+	"log"
 	"net/url"
 	"sync"
 	"time"
@@ -11,117 +16,122 @@ import (
 	"github.com/gorilla/websocket"
 )
 
-// WSMessage định nghĩa cấu trúc khung gói tin cơ bản từ WebSocket của DNSE
-type WSMessage struct {
-	Topic string          `json:"topic"`
-	Event string          `json:"event"`
-	Data  json.RawMessage `json:"data"`
+type WSClient struct {
+	conn       *websocket.Conn
+	baseURL    string
+	apiKey     string
+	apiSecret  string
+	mu         sync.Mutex
+	stopChan   chan struct{}
+	onMessage  func(msgType string, data []byte)
 }
 
-// StreamClient quản lý kết nối TCP WebSocket hạ tầng
-type StreamClient struct {
-	wsURL     string
-	apiKey    string
-	conn      *websocket.Conn
-	mu        sync.Mutex
-	isClosed  bool
-	outChan   chan WSMessage
-	errChan   chan error
-}
-
-// NewStreamClient khởi tạo một bộ kết nối WebSocket với kích thước bộ đệm tùy chọn
-func NewStreamClient(wsURL, apiKey string, bufferSize int) *StreamClient {
-	return &StreamClient{
-		wsURL:   wsURL,
-		apiKey:  apiKey,
-		outChan: make(chan WSMessage, bufferSize),
-		errChan: make(chan error, 64),
+func NewWSClient(baseURL, apiKey, apiSecret string, onMessage func(msgType string, data []byte)) *WSClient {
+	return &WSClient{
+		baseURL:   baseURL,
+		apiKey:    apiKey,
+		apiSecret: apiSecret,
+		stopChan:  make(chan struct{}),
+		onMessage: onMessage,
 	}
 }
 
-// Connect thiết lập kết nối Handshake và kích hoạt luồng đọc ngầm
-func (sc *StreamClient) Connect(ctx context.Context) error {
-	u, err := url.Parse(sc.wsURL)
+func generateNonce() string {
+	bytes := make([]byte, 16)
+	if _, err := rand.Read(bytes); err != nil {
+		return fmt.Sprintf("%d", time.Now().UnixNano())
+	}
+	return hex.EncodeToString(bytes)
+}
+
+// Connect thực hiện quay số WebSocket và tự động kích hoạt cơ chế Xác thực (Auth)
+func (ws *WSClient) Connect(ctx context.Context) error {
+	u, err := url.Parse(ws.baseURL)
 	if err != nil {
-		return fmt.Errorf("invalid websocket url: %w", err)
+		return err
 	}
+	u.Path = "/v1/stream"
+	u.RawQuery = "encoding=json"
 
-	q := u.Query()
-	q.Set("apiKey", sc.apiKey)
-	u.RawQuery = q.Encode()
-
-	dialer := websocket.Dialer{
-		HandshakeTimeout: 5 * time.Second,
-	}
-
+	dialer := websocket.Dialer{HandshakeTimeout: 10 * time.Second}
 	conn, _, err := dialer.DialContext(ctx, u.String(), nil)
 	if err != nil {
 		return fmt.Errorf("websocket dial failed: %w", err)
 	}
+	ws.conn = conn
 
-	sc.conn = conn
-	sc.isClosed = false
+	// Kích hoạt thủ tục đăng nhập (Auth) giống hệt auth.py bên Python SDK
+	if err := ws.authenticate(); err != nil {
+		ws.conn.Close()
+		return fmt.Errorf("websocket authentication failed: %w", err)
+	}
 
-	go sc.readLoop()
-
+	go ws.readLoop()
 	return nil
 }
 
-// Subscribe gửi yêu cầu đăng ký theo dõi một Topic nghiệp vụ cụ thể
-func (sc *StreamClient) Subscribe(topic string) error {
-	sc.mu.Lock()
-	defer sc.mu.Unlock()
+// authenticate thiết lập cấu trúc mã ký dựa trên chuỗi rỗng api_key:timestamp:nonce
+func (ws *WSClient) authenticate() error {
+	timestamp := fmt.Sprintf("%d", time.Now().UnixMilli())
+	nonce := generateNonce()
+	
+	// Công thức ký WebSocket riêng của DNSE: hmac_sha256(secret, "apiKey:timestamp:nonce")
+	rawSig := fmt.Sprintf("%s:%s:%s", ws.apiKey, timestamp, nonce)
+	mac := hmac.New(sha256.New, []byte(ws.apiSecret))
+	mac.Write([]byte(rawSig))
+	signature := hex.EncodeToString(mac.Sum(nil))
 
-	if sc.conn == nil || sc.isClosed {
-		return fmt.Errorf("websocket connection is inactive")
+	authPayload := map[string]interface{}{
+		"action": "auth",
+		"params": map[string]string{
+			"keyId":     ws.apiKey,
+			"timestamp": timestamp,
+			"nonce":     nonce,
+			"signature": signature,
+		},
 	}
 
-	req := map[string]string{
-		"action": "subscribe",
-		"topic":  topic,
-	}
-	return sc.conn.WriteJSON(req)
+	return ws.send(authPayload)
 }
 
-func (sc *StreamClient) readLoop() {
-	defer sc.Close()
+func (ws *WSClient) send(v interface{}) error {
+	ws.mu.Lock()
+	defer ws.mu.Unlock()
+	if ws.conn == nil {
+		return fmt.Errorf("connection is closed")
+	}
+	return ws.conn.WriteJSON(v)
+}
+
+func (ws *WSClient) readLoop() {
+	defer func() {
+		ws.conn.Close()
+	}()
 
 	for {
-		_, message, err := sc.conn.ReadMessage()
-		if err != nil {
-			if !sc.isClosed {
-				sc.errChan <- fmt.Errorf("websocket read connection broken: %w", err)
-			}
-			return
-		}
-
-		var wsMsg WSMessage
-		if err := json.Unmarshal(message, &wsMsg); err != nil {
-			continue // Bỏ qua nếu gói tin thô lỗi định dạng hệ thống
-		}
-
-		// Đẩy dữ liệu vào channel theo mô hình Non-blocking để bảo vệ hiệu năng
 		select {
-		case sc.outChan <- wsMsg:
+		case <-ws.stopChan:
+			return
 		default:
-			// Bộ đệm đầy, bỏ qua tin cũ để tránh nghẽn toàn luồng hệ thống
+			_, message, err := ws.conn.ReadMessage()
+			if err != nil {
+				log.Printf("Websocket read error: %v", err)
+				return
+			}
+
+			// Phân tích sơ bộ bọc gói tin dựa theo cấu trúc "channel" hoặc "event"
+			var generic map[string]interface{}
+			if err := json.Unmarshal(message, &generic); err == nil {
+				if channel, ok := generic["channel"].(string); ok {
+					ws.onMessage(channel, message)
+				} else {
+					ws.onMessage("system", message)
+				}
+			}
 		}
 	}
 }
 
-// Messages xuất kênh dữ liệu ra ngoài cho các module tầng trên tiêu thụ
-func (sc *StreamClient) Messages() <-chan WSMessage { return sc.outChan }
-func (sc *StreamClient) Errors() <-chan error       { return sc.errChan }
-
-// Close đóng kết nối an toàn bảo vệ tài nguyên mạng
-func (sc *StreamClient) Close() {
-	sc.mu.Lock()
-	defer sc.mu.Unlock()
-	if sc.isClosed {
-		return
-	}
-	sc.isClosed = true
-	if sc.conn != nil {
-		sc.conn.Close()
-	}
-}
+func (ws *WSClient) Close() {
+	close(ws.stopChan)
+	ws.mu.

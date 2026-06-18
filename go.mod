@@ -1,4 +1,4 @@
-module trading-client-go
+module dnse-sdk-go
 
 go 1.22
 

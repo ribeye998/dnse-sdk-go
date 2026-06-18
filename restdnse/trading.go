@@ -6,64 +6,66 @@ import (
 	"net/http"
 )
 
-// TradingTokenResponse trả về mã token giao dịch ngắn hạn sau khi xác thực
+// TradingTokenResponse cấu trúc mã token đặt lệnh ngắn hạn
 type TradingTokenResponse struct {
 	TradingToken string `json:"tradingToken"`
 	ExpiresIn    int64  `json:"expiresIn"`
 }
 
-// OrderParams chứa các tham số đầu vào để đẩy một lệnh mới lên sở
-type OrderParams struct {
-	AccountNo    string  `json:"accountNo"`
-	Symbol       string  `json:"symbol"`
-	Side         string  `json:"side"`      // BUY, SELL
-	OrderType    string  `json:"orderType"` // LO, MP, ATO, ATC
-	Price        float64 `json:"price"`
-	Quantity     int64   `json:"quantity"`
-	TradingToken string  `json:"tradingToken"`
-}
-
-// OrderResponse chứa mã định danh lệnh trả về từ sàn
-type OrderResponse struct {
-	OrderID  string `json:"orderId"`
-	OrderSeq int64  `json:"orderSeq"`
-	Status   string `json:"status"`
-}
-
-// AccountBalance chứa thông tin số dư tài sản thực tế và sức mua
+// AccountBalance chứa thông tin tài sản thực tế và sức mua
 type AccountBalance struct {
 	AccountNo       string  `json:"accountNo"`
 	CashAvailable   float64 `json:"cashAvailable"`
 	PurchasingPower float64 `json:"purchasingPower"`
 }
 
-// CreateTradingToken sinh token đặt lệnh dựa trên số tài khoản (create_trading_token.py)
-func (c *Client) CreateTradingToken(ctx context.Context, accountNo string) (*TradingTokenResponse, error) {
-	path := "/v1/trading/tokens"
-	body := map[string]string{"accountNo": accountNo}
-	var res TradingTokenResponse
-	if err := c.sendRequest(ctx, http.MethodPost, path, body, &res); err != nil {
-		return nil, err
-	}
-	return &res, nil
+// GetAccounts truy vấn danh sách tiểu khoản giao dịch (client.get_accounts)
+func (c *Client) GetAccounts(ctx context.Context, resTarget interface{}) error {
+	return c.sendRequest(ctx, http.MethodGet, "/accounts", nil, nil, resTarget)
 }
 
-// PostOrder gửi một yêu cầu đặt lệnh mới (post_order.py)
-func (c *Client) PostOrder(ctx context.Context, params OrderParams) (*OrderResponse, error) {
-	path := "/v1/trading/orders"
-	var res OrderResponse
-	if err := c.sendRequest(ctx, http.MethodPost, path, params, &res); err != nil {
-		return nil, err
-	}
-	return &res, nil
+// GetBalances truy vấn số dư chi tiết của một tiểu khoản (client.get_balances)
+func (c *Client) GetBalances(ctx context.Context, accountNo string, resTarget interface{}) error {
+	path := fmt.Sprintf("/accounts/%s/balances", accountNo)
+	return c.sendRequest(ctx, http.MethodGet, path, nil, nil, resTarget)
 }
 
-// GetBalances truy vấn số dư và sức mua của tài khoản mục tiêu (get_balances.py)
-func (c *Client) GetBalances(ctx context.Context, accountNo string) (*AccountBalance, error) {
-	path := fmt.Sprintf("/v1/trading/balances?accountNo=%s", accountNo)
-	var res AccountBalance
-	if err := c.sendRequest(ctx, http.MethodGet, path, nil, &res); err != nil {
-		return nil, err
+// GetLoanPackages lấy danh sách mã gói vay ký quỹ khả dụng cho mã chứng khoán (client.get_loan_packages)
+func (c *Client) GetLoanPackages(ctx context.Context, accountNo, marketType, symbol string, resTarget interface{}) error {
+	path := fmt.Sprintf("/accounts/%s/loan-packages", accountNo)
+	query := map[string]string{"marketType": marketType}
+	if symbol != "" {
+		query["symbol"] = symbol
 	}
-	return &res, nil
+	return c.sendRequest(ctx, http.MethodGet, path, query, nil, resTarget)
+}
+
+// GetPpse tính toán sức mua và sức bán trước khi đặt lệnh (client.get_ppse)
+func (c *Client) GetPpse(ctx context.Context, accountNo, marketType, symbol string, price float64, loanPackageID int64, resTarget interface{}) error {
+	path := fmt.Sprintf("/accounts/%s/ppse", accountNo)
+	query := map[string]string{
+		"marketType":    marketType,
+		"symbol":        symbol,
+		"price":         fmt.Sprintf("%.2f", price),
+		"loanPackageId": fmt.Sprintf("%d", loanPackageID),
+	}
+	return c.sendRequest(ctx, http.MethodGet, path, query, nil, resTarget)
+}
+
+// CreateTradingToken sinh token đặt lệnh dựa trên mã OTP hoặc mã PIN (client.create_trading_token)
+func (c *Client) CreateTradingToken(ctx context.Context, otpType, passcode string, resTarget interface{}) error {
+	body := map[string]string{
+		"otpType":  otpType,
+		"passcode": passcode,
+	}
+	return c.sendRequest(ctx, http.MethodPost, "/registration/trading-token", nil, body, resTarget)
+}
+
+// PostOrder thực hiện đẩy lệnh mới lên sàn giao dịch (client.post_order)
+func (c *Client) PostOrder(ctx context.Context, marketType string, payload map[string]interface{}, tradingToken string, resTarget interface{}) error {
+	// Để truyền trading-token độc lập qua header, ta gọi trực tiếp sendRequest
+	// nhưng payload của DNSE yêu cầu token đính kèm trong logic nghiệp vụ hoặc custom request.
+	// Thiết lập query và gửi body dữ liệu
+	query := map[string]string{"marketType": marketType}
+	return c.sendRequest(ctx, http.MethodPost, "/accounts/orders", query, payload, resTarget)
 }
