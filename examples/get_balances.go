@@ -24,7 +24,7 @@ func main() {
 	client := restdnse.NewClient(baseURL, apiKey, apiSecret)
 
 	// Tài khoản mục tiêu cần kiểm tra số dư
-	accountNo := "0001000115"
+	accountNo := os.Getenv("DNSE_ACCOUNT_ID")
 
 	var response interface{}
 	err := client.GetBalances(context.Background(), accountNo, &response)

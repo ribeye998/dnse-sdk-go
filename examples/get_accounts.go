@@ -6,26 +6,34 @@ import (
 	"log"
 	"os"
 
-	"trading-client-go/restdnse"
+	"dnse-sdk-go/restdnse"
+
+	"github.com/joho/godotenv"
 )
 
 func main() {
+	// Nạp biến môi trường từ file .env
+	_ = godotenv.Load()
+
 	apiKey := os.Getenv("DNSE_API_KEY")
 	apiSecret := os.Getenv("DNSE_API_SECRET")
-	if apiKey == "" || apiSecret == "" {
-		apiKey = "replace-with-api-key"
-		apiSecret = "replace-with-api-secret"
+	baseURL := os.Getenv("DNSE_BASE_URL")
+	if baseURL == "" {
+		baseURL = "https://openapi.dnse.com.vn"
 	}
 
-	// Khởi tạo client tới môi trường OpenAPI Production/Staging của DNSE
-	client := restdnse.NewClient("https://openapi.dnse.com.vn", apiKey, apiSecret)
+	if apiKey == "" || apiSecret == "" {
+		log.Fatalf("Lỗi: Vui lòng cấu hình DNSE_API_KEY và DNSE_API_SECRET trong file .env")
+	}
+
+	client := restdnse.NewClient(baseURL, apiKey, apiSecret)
 
 	var response interface{}
-	// Endpoint /accounts tương đương client.get_accounts() trong Python SDK
 	err := client.GetAccounts(context.Background(), &response)
 	if err != nil {
-		log.Fatalf("Lỗi gọi API GetAccounts: %v", err)
+		log.Fatalf("Gọi API GetAccounts thất bại: %v", err)
 	}
 
-	fmt.Printf("Trạng thái danh sách tài khoản thành công: %+v\n", response)
+	fmt.Println("--- DANH SÁCH TIỂU KHOẢN DNSE ---")
+	fmt.Printf("%+v\n", response)
 }

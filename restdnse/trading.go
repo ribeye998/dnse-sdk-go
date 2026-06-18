@@ -6,12 +6,6 @@ import (
 	"net/http"
 )
 
-// TradingTokenResponse cấu trúc mã token đặt lệnh ngắn hạn
-type TradingTokenResponse struct {
-	TradingToken string `json:"tradingToken"`
-	ExpiresIn    int64  `json:"expiresIn"`
-}
-
 // AccountBalance chứa thông tin tài sản thực tế và sức mua
 type AccountBalance struct {
 	AccountNo       string  `json:"accountNo"`
@@ -50,15 +44,6 @@ func (c *Client) GetPpse(ctx context.Context, accountNo, marketType, symbol stri
 		"loanPackageId": fmt.Sprintf("%d", loanPackageID),
 	}
 	return c.sendRequest(ctx, http.MethodGet, path, query, nil, resTarget)
-}
-
-// CreateTradingToken sinh token đặt lệnh dựa trên mã OTP hoặc mã PIN (client.create_trading_token)
-func (c *Client) CreateTradingToken(ctx context.Context, otpType, passcode string, resTarget interface{}) error {
-	body := map[string]string{
-		"otpType":  otpType,
-		"passcode": passcode,
-	}
-	return c.sendRequest(ctx, http.MethodPost, "/registration/trading-token", nil, body, resTarget)
 }
 
 // PostOrder thực hiện đẩy lệnh mới lên sàn giao dịch (client.post_order)

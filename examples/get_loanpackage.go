@@ -19,11 +19,9 @@ func main() {
 	accountNo := os.Getenv("DNSE_ACCOUNT_ID")
 	marketType := "STOCK"
 	symbol := "TCB"
-	var price float64 = 31000      // Mức giá dự kiến đặt mua
-	var loanPackageID int64 = 1775 // Gói margin dự kiến chọn
 
 	var response interface{}
-	err := client.GetPpse(context.Background(), accountNo, marketType, symbol, price, loanPackageID, &response)
+	err := client.GetLoanPackages(context.Background(), accountNo, marketType, symbol, &response)
 	if err != nil {
 		log.Fatalf("Lỗi tính toán Sức mua (PPSE): %v", err)
 	}
