@@ -4,7 +4,7 @@ import (
 	"context"
 	"fmt"
 	"log"
-	"os"
+	"time"
 
 	dnse "github.com/ribeye998/dnse-sdk-go"
 	"github.com/ribeye998/dnse-sdk-go/config"
@@ -16,16 +16,21 @@ func main() {
 		log.Fatalf("config: %v", err)
 	}
 
-	accountNo := os.Getenv("DNSE_ACCOUNT_ID")
-	if accountNo == "" {
-		log.Fatal("set DNSE_ACCOUNT_ID in your .env file")
-	}
-
 	client := dnse.NewClient(cfg.BaseURL, cfg.APIKey, cfg.APISecret)
 
-	result, err := client.GetLoanPackages(context.Background(), accountNo, dnse.MarketStock, "41I1G7000")
+	now := time.Now().Unix()
+	fiveMinsAgo := time.Now().Add(-5 * time.Minute).Unix()
+
+	params := dnse.TradeHistoryParams{
+		BoardID: "G1",
+		From:    fiveMinsAgo,
+		To:      now,
+		Limit:   10,
+	}
+
+	result, err := client.GetTrades(context.Background(), "VIC", params)
 	if err != nil {
-		log.Fatalf("GetLoanPackages: %v", err)
+		log.Fatalf("GetTrades: %v", err)
 	}
 
 	fmt.Println(string(result))

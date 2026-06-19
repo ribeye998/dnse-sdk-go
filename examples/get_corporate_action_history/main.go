@@ -16,19 +16,21 @@ func main() {
 		log.Fatalf("config: %v", err)
 	}
 
-	accountNo := os.Getenv("DNSE_ACCOUNT_ID")
-	if accountNo == "" {
+	accountID := os.Getenv("DNSE_ACCOUNT_ID")
+	if accountID == "" {
 		log.Fatal("set DNSE_ACCOUNT_ID in your .env file")
 	}
 
 	client := dnse.NewClient(cfg.BaseURL, cfg.APIKey, cfg.APISecret)
 
-	bal, err := client.GetBalances(context.Background(), accountNo)
-	if err != nil {
-		log.Fatalf("GetBalances: %v", err)
+	params := dnse.CorporateActionHistoryParams{
+		Symbol:    "ACB",
 	}
 
-	fmt.Printf("Account:          %s\n", bal.AccountNo)
-	fmt.Printf("Cash available:   %.2f\n", bal.CashAvailable)
-	fmt.Printf("Purchasing power: %.2f\n", bal.PurchasingPower)
+	history, err := client.GetCorporateActionHistory(context.Background(), accountID, params)
+	if err != nil {
+		log.Fatalf("GetCorporateActionHistory: %v", err)
+	}
+
+	fmt.Println(string(history))
 }

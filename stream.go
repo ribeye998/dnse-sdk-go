@@ -239,7 +239,10 @@ func (s *StreamClient) dispatch(data []byte) {
 		return
 	}
 
-	msgType, _ := msg["id"].(string)
+	msgType, _ := msg["T"].(string)
+	if msgType == "" {
+		msgType, _ = msg["id"].(string)
+	}
 	symbol, _ := msg["symbol"].(string)
 
 	s.mu.Lock()

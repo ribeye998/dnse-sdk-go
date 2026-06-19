@@ -16,9 +16,9 @@ func main() {
 		log.Fatalf("config: %v", err)
 	}
 
-	accountNo := os.Getenv("DNSE_ACCOUNT_NO")
+	accountNo := os.Getenv("DNSE_ACCOUNT_ID")
 	if accountNo == "" {
-		log.Fatal("set DNSE_ACCOUNT_NO in your .env file")
+		log.Fatal("set DNSE_ACCOUNT_ID in your .env file")
 	}
 
 	client := dnse.NewClient(cfg.BaseURL, cfg.APIKey, cfg.APISecret)

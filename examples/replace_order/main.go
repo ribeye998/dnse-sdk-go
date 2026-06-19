@@ -16,8 +16,8 @@ func main() {
 		log.Fatalf("config: %v", err)
 	}
 
-	accountNo := os.Getenv("DNSE_ACCOUNT_ID")
-	if accountNo == "" {
+	accountID := os.Getenv("DNSE_ACCOUNT_ID")
+	if accountID == "" {
 		log.Fatal("set DNSE_ACCOUNT_ID in your .env file")
 	}
 
@@ -40,20 +40,18 @@ func main() {
 	}
 	fmt.Printf("Trading token: %s\n", token)
 
-	req := dnse.OrderRequest{
-		AccountNo: accountNo,
-		Symbol:    "41I1G7000",
-		Side:      dnse.SideNS,
-		OrderType: "LO",
-		Price:     2108,
-		Quantity:  1,
-		LoanPackageID: 1036,
+	// Replace with a valid active order ID
+	orderID := "15742"
+
+	req := dnse.AmendOrderRequest{
+		Price:    33100,
+		Quantity: 100,
 	}
 
-	result, err := client.PlaceOrder(ctx, dnse.MarketDerivative, "NORMAL", req)
+	result, err := client.AmendOrder(ctx, accountID, orderID, dnse.MarketStock, "NORMAL", req)
 	if err != nil {
-		log.Fatalf("PlaceOrder: %v", err)
+		log.Fatalf("AmendOrder (Replace): %v", err)
 	}
 
-	fmt.Printf("Order placed: %s\n", string(result))
+	fmt.Printf("Order amended successfully: %s\n", string(result))
 }

@@ -51,8 +51,11 @@ func (c *Client) GetPPSE(ctx context.Context, accountNo string, marketType Marke
 func (c *Client) GetPositions(ctx context.Context, accountNo string, marketType MarketType) ([]Position, error) {
 	path := fmt.Sprintf("/accounts/%s/positions", accountNo)
 	q := url.Values{"marketType": {string(marketType)}}
-	var result []Position
-	return result, c.sendRequest(ctx, http.MethodGet, path, q, nil, &result)
+	var wrapper struct {
+		Positions []Position `json:"positions"`
+	}
+	err := c.sendRequest(ctx, http.MethodGet, path, q, nil, &wrapper)
+	return wrapper.Positions, err
 }
 
 // GetPositionByID returns the details of a specific position.
@@ -71,8 +74,11 @@ func (c *Client) GetOrders(ctx context.Context, accountNo string, marketType Mar
 	if orderCategory != "" {
 		q.Set("orderCategory", orderCategory)
 	}
-	var result []Order
-	return result, c.sendRequest(ctx, http.MethodGet, path, q, nil, &result)
+	var wrapper struct {
+		Orders []Order `json:"orders"`
+	}
+	err := c.sendRequest(ctx, http.MethodGet, path, q, nil, &wrapper)
+	return wrapper.Orders, err
 }
 
 // GetOrderDetail returns the details of a single intraday order.

@@ -27,7 +27,7 @@ type Balance struct {
 
 // Order represents a trading order as defined by the DNSE OpenAPI spec.
 type Order struct {
-	ID               string     `json:"id"`
+	ID               int64      `json:"id"`
 	Side             OrderSide  `json:"side"`
 	AccountNo        string     `json:"accountNo"`
 	Symbol           string     `json:"symbol"`

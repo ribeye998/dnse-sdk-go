@@ -16,19 +16,23 @@ func main() {
 		log.Fatalf("config: %v", err)
 	}
 
-	accountNo := os.Getenv("DNSE_ACCOUNT_ID")
-	if accountNo == "" {
+	accountID := os.Getenv("DNSE_ACCOUNT_ID")
+	if accountID == "" {
 		log.Fatal("set DNSE_ACCOUNT_ID in your .env file")
 	}
 
 	client := dnse.NewClient(cfg.BaseURL, cfg.APIKey, cfg.APISecret)
 
-	bal, err := client.GetBalances(context.Background(), accountNo)
-	if err != nil {
-		log.Fatalf("GetBalances: %v", err)
+	params := dnse.OrderHistoryParams{
+		From:     "2026-06-01",
+		To:       "2026-06-19",
+		PageSize: 10,
 	}
 
-	fmt.Printf("Account:          %s\n", bal.AccountNo)
-	fmt.Printf("Cash available:   %.2f\n", bal.CashAvailable)
-	fmt.Printf("Purchasing power: %.2f\n", bal.PurchasingPower)
+	history, err := client.GetOrderHistory(context.Background(), accountID, dnse.MarketStock, params)
+	if err != nil {
+		log.Fatalf("GetOrderHistory: %v", err)
+	}
+
+	fmt.Println(string(history))
 }
