@@ -22,22 +22,26 @@ func main() {
 	}
 
 	client := dnse.NewClient(cfg.BaseURL, cfg.APIKey, cfg.APISecret)
-
-	pin := os.Getenv("DNSE_PIN")
-	if pin == "" {
-		fmt.Print("Enter PIN: ")
-		_, err := fmt.Scanln(&pin)
-		if err != nil {
-			log.Fatalf("read PIN: %v", err)
-		}
-	}
-
 	ctx := context.Background()
 
-	token, err := client.CreateTradingToken(ctx, "smart_otp", pin)
-	if err != nil {
-		log.Fatalf("CreateTradingToken: %v", err)
+	token := os.Getenv("DNSE_TRADING_TOKEN")
+	if token == "" {
+		pin := os.Getenv("DNSE_PIN")
+		if pin == "" {
+			fmt.Print("Enter PIN: ")
+			_, err := fmt.Scanln(&pin)
+			if err != nil {
+				log.Fatalf("read PIN: %v", err)
+			}
+		}
+
+		var err error
+		token, err = client.CreateTradingToken(ctx, "smart_otp", pin)
+		if err != nil {
+			log.Fatalf("CreateTradingToken: %v", err)
+		}
 	}
+	client.SetTradingToken(token)
 	fmt.Printf("Trading token: %s\n", token)
 
 	// Replace Symbol, Price, Quantity, and LoanPackageID with your own values.

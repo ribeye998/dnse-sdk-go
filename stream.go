@@ -292,15 +292,15 @@ func (s *StreamClient) dispatch(data []byte) {
 		if onSecDef != nil {
 			onSecDef(symbol, msg)
 		}
-	case "o":
+	case "o", "eo":
 		if onOrderUpdate != nil {
 			onOrderUpdate(msg)
 		}
-	case "p":
+	case "p", "positions":
 		if onPositionUpdate != nil {
 			onPositionUpdate(msg)
 		}
-	case "a":
+	case "a", "account":
 		if onAccountUpdate != nil {
 			onAccountUpdate(msg)
 		}
