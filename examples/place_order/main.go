@@ -34,23 +34,26 @@ func main() {
 
 	ctx := context.Background()
 
-	token, err := client.CreateTradingToken(ctx, "smart_otp", string(pin))
+	token, err := client.CreateTradingToken(ctx, "smart_otp", pin)
 	if err != nil {
 		log.Fatalf("CreateTradingToken: %v", err)
 	}
 	fmt.Printf("Trading token: %s\n", token)
 
+	// Replace Symbol, Price, Quantity, and LoanPackageID with your own values.
+	// For SELL orders, LoanPackageID must match the package where your position is held —
+	// using the wrong package causes a TRADE_QUANTITY_NOT_ENOUGH error.
 	req := dnse.OrderRequest{
-		AccountNo: accountNo,
-		Symbol:    "41I1G7000",
-		Side:      dnse.SideNS,
-		OrderType: "LO",
-		Price:     2108,
-		Quantity:  1,
-		LoanPackageID: 1036,
+		AccountNo:     accountNo,
+		Symbol:        "VIC",   // e.g. "VIC" for stock, "VN30F2507" for derivative
+		Side:          dnse.SideBuy,
+		OrderType:     "LO",
+		Price:         45000,
+		Quantity:      100,
+		LoanPackageID: 0, // set to your loan package ID for margin orders; 0 for cash
 	}
 
-	result, err := client.PlaceOrder(ctx, dnse.MarketDerivative, "NORMAL", req)
+	result, err := client.PlaceOrder(ctx, dnse.MarketStock, "NORMAL", req)
 	if err != nil {
 		log.Fatalf("PlaceOrder: %v", err)
 	}
