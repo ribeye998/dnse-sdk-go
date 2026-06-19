@@ -22,8 +22,9 @@ func (s *StreamClient) StartTradingData(marketType MarketType) error {
 	if err := s.Connect(); err != nil {
 		return fmt.Errorf("dnse: stream connect: %w", err)
 	}
+	enc := s.Encoding()
 	channels := map[string][]string{
-		ChanOrder(string(marketType), "json"): {},
+		ChanOrder(string(marketType), enc): {},
 		ChanOrders:    {},
 		ChanPositions: {},
 		ChanAccount:   {},

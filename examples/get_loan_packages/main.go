@@ -23,7 +23,8 @@ func main() {
 
 	client := dnse.NewClient(cfg.BaseURL, cfg.APIKey, cfg.APISecret)
 
-	result, err := client.GetLoanPackages(context.Background(), accountNo, dnse.MarketStock, "41I1G7000")
+	// Replace "VIC" with the symbol you hold a margin position in.
+	result, err := client.GetLoanPackages(context.Background(), accountNo, dnse.MarketStock, "VIC")
 	if err != nil {
 		log.Fatalf("GetLoanPackages: %v", err)
 	}

@@ -10,9 +10,20 @@ import (
 
 	gorilla "github.com/gorilla/websocket"
 	"github.com/ribeye998/dnse-sdk-go/internal/signing"
+	"github.com/vmihailenco/msgpack/v5"
 )
 
 const DefaultWSURL = "wss://ws-openapi.dnse.com.vn"
+
+// StreamClientOption is a functional option for NewStreamClient.
+type StreamClientOption func(*StreamClient)
+
+// WithMsgPack switches the stream encoding to MsgPack (binary).
+// MsgPack frames are more compact and faster to parse than JSON.
+// When set, all channel subscriptions use "msgpack" encoding.
+func WithMsgPack() StreamClientOption {
+	return func(s *StreamClient) { s.encoding = "msgpack" }
+}
 
 // StreamClient manages a persistent WebSocket connection to the DNSE stream server.
 // Register callbacks with OnQuote, OnTick, etc. before calling Connect or Start*.
@@ -47,14 +58,26 @@ type StreamClient struct {
 }
 
 // NewStreamClient creates a WebSocket streaming client.
-func NewStreamClient(baseURL, apiKey, apiSecret string) *StreamClient {
-	return &StreamClient{
+// Use WithMsgPack() to switch to binary MsgPack encoding.
+func NewStreamClient(baseURL, apiKey, apiSecret string, opts ...StreamClientOption) *StreamClient {
+	s := &StreamClient{
 		baseURL:           strings.TrimSuffix(baseURL, "/"),
 		apiKey:            apiKey,
 		apiSecret:         apiSecret,
 		encoding:          "json",
 		heartbeatInterval: 10 * time.Second,
 	}
+	for _, o := range opts {
+		o(s)
+	}
+	return s
+}
+
+// Encoding returns the wire encoding in use: "json" or "msgpack".
+func (s *StreamClient) Encoding() string {
+	s.mu.Lock()
+	defer s.mu.Unlock()
+	return s.encoding
 }
 
 // SetTradingToken sets the trading token for private channel subscriptions.
@@ -183,9 +206,7 @@ func (s *StreamClient) Connect() error {
 
 	authMsg := signing.BuildWSAuthMessage(s.apiKey, s.apiSecret, s.tradingToken, s.accountNo)
 	s.writeMu.Lock()
-	_ = conn.SetWriteDeadline(time.Now().Add(10 * time.Second))
-	err = conn.WriteJSON(authMsg)
-	_ = conn.SetWriteDeadline(time.Time{})
+	err = s.writeMsgToConn(conn, authMsg)
 	s.writeMu.Unlock()
 	if err != nil {
 		conn.Close()
@@ -216,34 +237,55 @@ func (s *StreamClient) Close() {
 	}
 }
 
-func (s *StreamClient) writeJSON(v interface{}) error {
+// writeMsg sends v to the server using the negotiated wire encoding.
+// In msgpack mode it marshals to binary; in json mode it uses text frames.
+func (s *StreamClient) writeMsg(v interface{}) error {
 	s.writeMu.Lock()
 	defer s.writeMu.Unlock()
 	if s.conn == nil {
 		return fmt.Errorf("dnse: stream not connected")
 	}
-	_ = s.conn.SetWriteDeadline(time.Now().Add(5 * time.Second))
-	err := s.conn.WriteJSON(v)
-	_ = s.conn.SetWriteDeadline(time.Time{})
-	return err
+	return s.writeMsgToConn(s.conn, v)
 }
 
-// dispatch routes an incoming JSON message to the registered callback.
-// Routing is done on the "id" (message type code) field, not the channel name.
-// Known type codes: "q" (quote/depth), "t" (tick), "te" (tick_extra),
-// "b" (ohlc bar), "mi"/"idx" (market index), "f" (foreign), "e"/"ep" (expected price),
-// "sd" (security definition), "o" (order), "p" (position), "a" (account).
-func (s *StreamClient) dispatch(data []byte) {
+// writeMsgToConn is the low-level send used by both writeMsg and Connect (before s.conn is set).
+func (s *StreamClient) writeMsgToConn(conn *gorilla.Conn, v interface{}) error {
+	_ = conn.SetWriteDeadline(time.Now().Add(5 * time.Second))
+	defer conn.SetWriteDeadline(time.Time{})
+	if s.encoding == "msgpack" {
+		b, err := msgpack.Marshal(v)
+		if err != nil {
+			return err
+		}
+		return conn.WriteMessage(gorilla.BinaryMessage, b)
+	}
+	return conn.WriteJSON(v)
+}
+
+// dispatchJSON decodes a raw JSON frame and routes it to the registered callback.
+func (s *StreamClient) dispatchJSON(data []byte) {
 	var msg map[string]interface{}
 	if err := json.Unmarshal(data, &msg); err != nil {
 		return
 	}
+	s.dispatchMap(msg)
+}
 
+// dispatchMap routes a decoded message map to the registered callback.
+// The type code is read from "T" (MsgPack primary / JSON optional) with "id" as fallback.
+// Known type codes: "q" (quote/depth), "t" (tick), "te" (tick_extra),
+// "b" (ohlc bar), "mi"/"idx" (market index), "f" (foreign), "e"/"ep" (expected price),
+// "sd" (security definition), "o"/"eo" (order), "p"/"positions" (position), "a"/"account" (account).
+func (s *StreamClient) dispatchMap(msg map[string]interface{}) {
 	msgType, _ := msg["T"].(string)
 	if msgType == "" {
 		msgType, _ = msg["id"].(string)
 	}
-	symbol, _ := msg["symbol"].(string)
+	// MsgPack uses TitleCase field names; JSON uses lowercase.
+	symbol, _ := msg["Symbol"].(string)
+	if symbol == "" {
+		symbol, _ = msg["symbol"].(string)
+	}
 
 	s.mu.Lock()
 	onQuote := s.onQuote
@@ -309,12 +351,23 @@ func (s *StreamClient) dispatch(data []byte) {
 
 func (s *StreamClient) readLoop(conn *gorilla.Conn) {
 	defer conn.Close()
+	enc := s.Encoding()
 	for {
-		_, msg, err := conn.ReadMessage()
+		msgType, data, err := conn.ReadMessage()
 		if err != nil {
 			return
 		}
-		s.dispatch(msg)
+		if enc == "msgpack" && msgType == gorilla.BinaryMessage {
+			msgs, err := decodeMsgpack(data)
+			if err != nil {
+				continue
+			}
+			for _, m := range msgs {
+				s.dispatchMap(m)
+			}
+		} else {
+			s.dispatchJSON(data)
+		}
 	}
 }
 

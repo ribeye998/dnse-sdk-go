@@ -40,7 +40,8 @@ func main() {
 	}
 	fmt.Printf("Obtained trading token: %s\n", token)
 
-	// 2. Configure WebSocket Stream Client
+	// 2. Configure WebSocket Stream Client.
+	// Optionally pass dnse.WithMsgPack() for binary MsgPack encoding (more compact).
 	stream := dnse.NewStreamClient(cfg.WSURL, cfg.APIKey, cfg.APISecret)
 	stream.SetAccountNo(accountNo)
 	stream.SetTradingToken(token)

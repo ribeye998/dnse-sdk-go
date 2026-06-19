@@ -88,7 +88,7 @@ func (s *StreamClient) Subscribe(channels map[string][]string) error {
 			"symbols": symbols,
 		})
 	}
-	return s.writeJSON(map[string]interface{}{
+	return s.writeMsg(map[string]interface{}{
 		"action":   "subscribe",
 		"channels": list,
 	})
@@ -111,7 +111,8 @@ func (s *StreamClient) SubscribeMarketIndex(indices []string, encoding string) e
 }
 
 // StartMarketData connects and subscribes to the most common market data channels
-// for the given symbols on board G1 (primary HOSE/HNX round-lot board) using JSON encoding.
+// for the given symbols on board G1 (primary HOSE/HNX round-lot board).
+// The wire encoding is determined by the client's encoding setting (see WithMsgPack).
 //
 //   - includeTicks: trade ticks (ChanTicks)
 //   - includeOrderBook: bid/ask depth (ChanTopPrice)
@@ -120,15 +121,16 @@ func (s *StreamClient) StartMarketData(symbols []string, includeTicks, includeOr
 	if err := s.Connect(); err != nil {
 		return fmt.Errorf("dnse: stream connect: %w", err)
 	}
+	enc := s.Encoding()
 	channels := map[string][]string{}
 	if includeTicks {
-		channels[ChanTicks(BoardG1, "json")] = symbols
+		channels[ChanTicks(BoardG1, enc)] = symbols
 	}
 	if includeOrderBook {
-		channels[ChanTopPrice(BoardG1, "json")] = symbols
+		channels[ChanTopPrice(BoardG1, enc)] = symbols
 	}
 	if includeOHLC {
-		channels[ChanOHLC(Resolution1m, "json")] = symbols
+		channels[ChanOHLC(Resolution1m, enc)] = symbols
 	}
 	if len(channels) > 0 {
 		if err := s.Subscribe(channels); err != nil {
