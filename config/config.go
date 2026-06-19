@@ -1,26 +1,48 @@
-package main
+// Package config loads DNSE API credentials from environment variables.
+package config
 
 import (
-	"context"
-	"log"
-	
-	"dnse-sdk-go/config"
-	"dnse-sdk-go/restdnse"
-	"dnse-sdk-go/websocket"
+	"errors"
+	"os"
+
+	"github.com/joho/godotenv"
 )
 
-func main() {
-	// 1. Đọc và kiểm tra cấu hình
-	cfg := config.NewConfigFromEnv()
-	if err := cfg.Validate(); err != nil {
-		log.Fatalf("Cấu hình không hợp lệ: %v", err)
+// Config holds connection parameters for the DNSE REST and WebSocket APIs.
+type Config struct {
+	BaseURL   string
+	WSURL     string
+	APIKey    string
+	APISecret string
+}
+
+// FromEnv reads configuration from environment variables.
+// It silently attempts to load a .env file first.
+func FromEnv() (*Config, error) {
+	_ = godotenv.Load()
+	c := &Config{
+		BaseURL:   envOrDefault("DNSE_BASE_URL", "https://openapi.dnse.com.vn"),
+		WSURL:     envOrDefault("DNSE_WS_URL", "wss://ws-openapi.dnse.com.vn"),
+		APIKey:    os.Getenv("DNSE_API_KEY"),
+		APISecret: os.Getenv("DNSE_API_SECRET"),
 	}
+	return c, c.Validate()
+}
 
-	// 2. Khởi tạo REST Client
-	restClient := restdnse.NewClient(cfg.BaseURL, cfg.APIKey, cfg.APISecret)
+// Validate returns an error if any required field is missing.
+func (c *Config) Validate() error {
+	if c.APIKey == "" {
+		return errors.New("DNSE_API_KEY is required")
+	}
+	if c.APISecret == "" {
+		return errors.New("DNSE_API_SECRET is required")
+	}
+	return nil
+}
 
-	// 3. Khởi tạo WebSocket Stream Client
-	wsClient := websocket.NewStreamClient(cfg.WSURL, cfg.APIKey, 1000)
-	
-	// Tiếp tục thực hiện logic giao dịch...
+func envOrDefault(key, def string) string {
+	if v := os.Getenv(key); v != "" {
+		return v
+	}
+	return def
 }

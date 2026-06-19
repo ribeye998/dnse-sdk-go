@@ -1,0 +1,26 @@
+package main
+
+import (
+	"context"
+	"fmt"
+	"log"
+
+	dnse "github.com/ribeye998/dnse-sdk-go"
+	"github.com/ribeye998/dnse-sdk-go/config"
+)
+
+func main() {
+	cfg, err := config.FromEnv()
+	if err != nil {
+		log.Fatalf("config: %v", err)
+	}
+
+	client := dnse.NewClient(cfg.BaseURL, cfg.APIKey, cfg.APISecret)
+
+	accounts, err := client.GetAccounts(context.Background())
+	if err != nil {
+		log.Fatalf("GetAccounts: %v", err)
+	}
+
+	fmt.Println(string(accounts))
+}
