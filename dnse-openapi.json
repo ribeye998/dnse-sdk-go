@@ -1,0 +1,1451 @@
+{
+    "openapi": "3.0.3",
+    "info": {
+        "title": "DNSE OpenAPI Complete",
+        "description": "API nền tảng giao dịch chứng khoán DNSE OpenAPI hỗ trợ tích hợp dịch vụ môi giới, giao dịch, ký quỹ, dữ liệu thị trường REST và kết nối WebSocket streams.",
+        "version": "2026-05-07"
+    },
+    "servers": [
+        {
+            "url": "https://openapi.dnse.com.vn",
+            "description": "Production REST API Server"
+        },
+        {
+            "url": "wss://ws-openapi.dnse.com.vn",
+            "description": "Production WebSocket Stream Server"
+        }
+    ],
+    "security": [
+        {
+            "ApiKeyAuth": []
+        },
+        {
+            "SignatureAuth": []
+        },
+        {
+            "DateHeader": []
+        },
+        {
+            "VersionHeader": []
+        }
+    ],
+    "components": {
+        "securitySchemes": {
+            "ApiKeyAuth": {
+                "type": "apiKey",
+                "in": "header",
+                "name": "x-api-key"
+            },
+            "SignatureAuth": {
+                "type": "apiKey",
+                "in": "header",
+                "name": "X-Signature"
+            },
+            "DateHeader": {
+                "type": "apiKey",
+                "in": "header",
+                "name": "Date"
+            },
+            "VersionHeader": {
+                "type": "apiKey",
+                "in": "header",
+                "name": "version"
+            }
+        },
+        "schemas": {
+            "Order": {
+                "type": "object",
+                "description": "Cấu trúc dữ liệu chi tiết của một Đơn lệnh",
+                "properties": {
+                    "id": {
+                        "type": "string",
+                        "description": "Mã định danh lệnh"
+                    },
+                    "side": {
+                        "type": "string",
+                        "enum": [
+                            "BUY",
+                            "SELL",
+                            "NB",
+                            "NS"
+                        ],
+                        "description": "Hướng lệnh (Mua/Bán)"
+                    },
+                    "accountNo": {
+                        "type": "string",
+                        "description": "Số tiểu khoản"
+                    },
+                    "symbol": {
+                        "type": "string",
+                        "description": "Mã chứng khoán"
+                    },
+                    "price": {
+                        "type": "number",
+                        "description": "Mức giá đặt"
+                    },
+                    "priceSecure": {
+                        "type": "number",
+                        "description": "Mức giá ký quỹ bảo đảm"
+                    },
+                    "averagePrice": {
+                        "type": "number",
+                        "description": "Mức giá khớp trung bình"
+                    },
+                    "quantity": {
+                        "type": "integer",
+                        "description": "Khối lượng đặt lệnh"
+                    },
+                    "fillQuantity": {
+                        "type": "integer",
+                        "description": "Khối lượng đã khớp"
+                    },
+                    "canceledQuantity": {
+                        "type": "integer",
+                        "description": "Khối lượng đã hủy"
+                    },
+                    "leaveQuantity": {
+                        "type": "integer",
+                        "description": "Khối lượng còn lại chưa khớp"
+                    },
+                    "orderType": {
+                        "type": "string",
+                        "description": "Loại lệnh (LO, MP, ATO, ATC...)"
+                    },
+                    "orderStatus": {
+                        "type": "string",
+                        "description": "Trạng thái lệnh"
+                    },
+                    "loanPackageId": {
+                        "type": "integer",
+                        "description": "ID gói sản phẩm vay ký quỹ đi kèm"
+                    },
+                    "marketType": {
+                        "type": "string",
+                        "description": "STOCK hoặc DERIVATIVE"
+                    },
+                    "transDate": {
+                        "type": "string"
+                    },
+                    "createdDate": {
+                        "type": "string"
+                    },
+                    "modifiedDate": {
+                        "type": "string"
+                    }
+                }
+            },
+            "Position": {
+                "type": "object",
+                "description": "Cấu trúc dữ liệu Vị thế danh mục đầu tư",
+                "properties": {
+                    "id": {
+                        "type": "integer"
+                    },
+                    "accountNo": {
+                        "type": "string"
+                    },
+                    "symbol": {
+                        "type": "string"
+                    },
+                    "status": {
+                        "type": "string"
+                    },
+                    "loanPackageId": {
+                        "type": "integer"
+                    },
+                    "side": {
+                        "type": "string"
+                    },
+                    "accumulateQuantity": {
+                        "type": "integer"
+                    },
+                    "tradeQuantity": {
+                        "type": "integer"
+                    },
+                    "closedQuantity": {
+                        "type": "integer"
+                    },
+                    "costPrice": {
+                        "type": "number"
+                    },
+                    "marketPrice": {
+                        "type": "number"
+                    },
+                    "breakEvenPrice": {
+                        "type": "number"
+                    },
+                    "openQuantity": {
+                        "type": "integer"
+                    },
+                    "overNightQuantity": {
+                        "type": "integer"
+                    },
+                    "averageClosePrice": {
+                        "type": "number"
+                    },
+                    "marketType": {
+                        "type": "string"
+                    }
+                }
+            },
+            "WebSocketAuthMessage": {
+                "type": "object",
+                "description": "Gói tin yêu cầu xác thực kết nối WebSocket Stream",
+                "required": [
+                    "action",
+                    "api_key",
+                    "signature",
+                    "timestamp",
+                    "nonce"
+                ],
+                "properties": {
+                    "action": {
+                        "type": "string",
+                        "example": "auth"
+                    },
+                    "api_key": {
+                        "type": "string"
+                    },
+                    "signature": {
+                        "type": "string",
+                        "description": "Chữ ký mã hóa hmac-sha256 từ chuỗi định dạng api_key:timestamp:nonce"
+                    },
+                    "timestamp": {
+                        "type": "integer",
+                        "description": "Unix timestamp tính bằng giây"
+                    },
+                    "nonce": {
+                        "type": "string",
+                        "description": "Chuỗi định danh độc nhất cho tin nhắn tính bằng microseconds"
+                    }
+                }
+            },
+            "WebSocketSubscribeMessage": {
+                "type": "object",
+                "description": "Gói tin đăng ký nhận dữ liệu thời gian thực qua các kênh (Channels)",
+                "required": [
+                    "action",
+                    "channels"
+                ],
+                "properties": {
+                    "action": {
+                        "type": "string",
+                        "example": "subscribe"
+                    },
+                    "channels": {
+                        "type": "array",
+                        "items": {
+                            "type": "object",
+                            "required": [
+                                "name",
+                                "symbols"
+                            ],
+                            "properties": {
+                                "name": {
+                                    "type": "string",
+                                    "description": "Tên kênh dữ liệu. Ví dụ: 'tick.G1.json', 'top_price.G1.json', 'ohlc.1.json', 'order.STOCK.json', 'position.STOCK.json'"
+                                },
+                                "symbols": {
+                                    "type": "array",
+                                    "items": {
+                                        "type": "string"
+                                    },
+                                    "description": "Danh sách các mã chứng khoán đăng ký theo dõi (Để trống đối với kênh lệnh/tài khoản cá nhân)"
+                                }
+                            }
+                        }
+                    }
+                }
+            }
+        }
+    },
+    "paths": {
+        "/accounts": {
+            "get": {
+                "summary": "Lấy danh sách tiểu khoản giao dịch",
+                "responses": {
+                    "200": {
+                        "description": "Thành công"
+                    }
+                }
+            }
+        },
+        "/accounts/{accountNo}/balances": {
+            "get": {
+                "summary": "Lấy số dư tài sản tiểu khoản",
+                "parameters": [
+                    {
+                        "name": "accountNo",
+                        "in": "path",
+                        "required": true,
+                        "schema": {
+                            "type": "string"
+                        }
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "Thành công"
+                    }
+                }
+            }
+        },
+        "/accounts/{accountNo}/loan-packages": {
+            "get": {
+                "summary": "Lấy danh sách gói vay khả dụng",
+                "parameters": [
+                    {
+                        "name": "accountNo",
+                        "in": "path",
+                        "required": true,
+                        "schema": {
+                            "type": "string"
+                        }
+                    },
+                    {
+                        "name": "marketType",
+                        "in": "query",
+                        "required": true,
+                        "schema": {
+                            "type": "string",
+                            "enum": [
+                                "STOCK",
+                                "DERIVATIVE"
+                            ]
+                        }
+                    },
+                    {
+                        "name": "symbol",
+                        "in": "query",
+                        "required": false,
+                        "schema": {
+                            "type": "string"
+                        }
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "Thành công"
+                    }
+                }
+            }
+        },
+        "/accounts/{accountNo}/positions": {
+            "get": {
+                "summary": "Lấy danh sách vị thế đang nắm giữ",
+                "parameters": [
+                    {
+                        "name": "accountNo",
+                        "in": "path",
+                        "required": true,
+                        "schema": {
+                            "type": "string"
+                        }
+                    },
+                    {
+                        "name": "marketType",
+                        "in": "query",
+                        "required": true,
+                        "schema": {
+                            "type": "string"
+                        }
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "Thành công"
+                    }
+                }
+            }
+        },
+        "/accounts/positions/{positionId}": {
+            "get": {
+                "summary": "Truy vấn chi tiết một vị thế cụ thể (Get Position By ID)",
+                "description": "Lấy thông tin chi tiết của một vị thế danh mục (đặc biệt hữu ích cho việc quản lý trạng thái vị thế phái sinh ký quỹ) theo ID.",
+                "parameters": [
+                    {
+                        "name": "positionId",
+                        "in": "path",
+                        "required": true,
+                        "schema": {
+                            "type": "string"
+                        },
+                        "description": "Mã định danh duy nhất của vị thế"
+                    },
+                    {
+                        "name": "marketType",
+                        "in": "query",
+                        "required": true,
+                        "schema": {
+                            "type": "string",
+                            "enum": [
+                                "STOCK",
+                                "DERIVATIVE"
+                            ]
+                        },
+                        "description": "Loại thị trường tương ứng"
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "Thành công",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "$ref": "#/components/schemas/Position"
+                                }
+                            }
+                        }
+                    }
+                }
+            }
+        },
+        "/accounts/positions/{positionId}/close": {
+            "post": {
+                "summary": "Đóng một vị thế đang mở (Phái sinh)",
+                "parameters": [
+                    {
+                        "name": "positionId",
+                        "in": "path",
+                        "required": true,
+                        "schema": {
+                            "type": "string"
+                        }
+                    },
+                    {
+                        "name": "marketType",
+                        "in": "query",
+                        "required": true,
+                        "schema": {
+                            "type": "string"
+                        }
+                    },
+                    {
+                        "name": "trading-token",
+                        "in": "header",
+                        "required": true,
+                        "schema": {
+                            "type": "string"
+                        }
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "Thành công"
+                    }
+                }
+            }
+        },
+        "/accounts/{accountNo}/orders": {
+            "get": {
+                "summary": "Lấy sổ lệnh trong ngày",
+                "parameters": [
+                    {
+                        "name": "accountNo",
+                        "in": "path",
+                        "required": true,
+                        "schema": {
+                            "type": "string"
+                        }
+                    },
+                    {
+                        "name": "marketType",
+                        "in": "query",
+                        "required": true,
+                        "schema": {
+                            "type": "string"
+                        }
+                    },
+                    {
+                        "name": "orderCategory",
+                        "in": "query",
+                        "required": false,
+                        "schema": {
+                            "type": "string"
+                        }
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "Thành công"
+                    }
+                }
+            }
+        },
+        "/accounts/{accountNo}/executions/{orderId}": {
+            "get": {
+                "summary": "Xem chi tiết kết quả khớp lệnh (Execution Details)",
+                "description": "Truy xuất danh sách chi tiết các lần khớp lệnh nhỏ (giao dịch thành công) của một đơn lệnh cụ thể dựa trên ID lệnh.",
+                "parameters": [
+                    {
+                        "name": "accountNo",
+                        "in": "path",
+                        "required": true,
+                        "schema": {
+                            "type": "string"
+                        },
+                        "description": "Số tiểu khoản giao dịch"
+                    },
+                    {
+                        "name": "orderId",
+                        "in": "path",
+                        "required": true,
+                        "schema": {
+                            "type": "string"
+                        },
+                        "description": "Mã định danh lệnh cần tra cứu"
+                    },
+                    {
+                        "name": "marketType",
+                        "in": "query",
+                        "required": true,
+                        "schema": {
+                            "type": "string",
+                            "enum": [
+                                "STOCK",
+                                "DERIVATIVE"
+                            ]
+                        },
+                        "description": "Loại thị trường"
+                    },
+                    {
+                        "name": "orderCategory",
+                        "in": "query",
+                        "required": false,
+                        "schema": {
+                            "type": "string",
+                            "default": "NORMAL"
+                        },
+                        "description": "Danh mục phân loại lệnh (Ví dụ: NORMAL)"
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "Thành công. Trả về chi tiết các dữ liệu khớp lệnh."
+                    }
+                }
+            }
+        },
+        "/accounts/{accountNo}/positions/{positionId}/close": {
+            "post": {
+                "summary": "Đóng vị thế hoặc tất toán Deal phái sinh (Close Deal/Position)",
+                "description": "Thực hiện đóng vị thế phái sinh hoặc đóng deal giao dịch dựa trên ID vị thế cụ thể.",
+                "parameters": [
+                    {
+                        "name": "accountNo",
+                        "in": "path",
+                        "required": true,
+                        "schema": {
+                            "type": "string"
+                        },
+                        "description": "Số tài khoản giao dịch"
+                    },
+                    {
+                        "name": "positionId",
+                        "in": "path",
+                        "required": true,
+                        "schema": {
+                            "type": "string"
+                        },
+                        "description": "ID của vị thế / ID của Deal cần đóng"
+                    },
+                    {
+                        "name": "marketType",
+                        "in": "query",
+                        "required": true,
+                        "schema": {
+                            "type": "string",
+                            "default": "DERIVATIVE"
+                        },
+                        "description": "Loại thị trường (Ví dụ: DERIVATIVE)"
+                    },
+                    {
+                        "name": "trading-token",
+                        "in": "header",
+                        "required": true,
+                        "schema": {
+                            "type": "string"
+                        },
+                        "description": "Trading Token hợp lệ dùng để xác thực quyền đóng vị thế"
+                    }
+                ],
+                "requestBody": {
+                    "description": "Payload dữ liệu đi kèm để thực hiện đóng vị thế (nếu có)",
+                    "required": true,
+                    "content": {
+                        "application/json": {
+                            "schema": {
+                                "type": "object"
+                            }
+                        }
+                    }
+                },
+                "responses": {
+                    "200": {
+                        "description": "Yêu cầu đóng vị thế/deal thành công"
+                    }
+                }
+            }
+        },
+        "/accounts/{accountNo}/orders/history": {
+            "get": {
+                "summary": "Lấy lịch sử đặt lệnh",
+                "parameters": [
+                    {
+                        "name": "accountNo",
+                        "in": "path",
+                        "required": true,
+                        "schema": {
+                            "type": "string"
+                        }
+                    },
+                    {
+                        "name": "marketType",
+                        "in": "query",
+                        "required": true,
+                        "schema": {
+                            "type": "string"
+                        }
+                    },
+                    {
+                        "name": "from",
+                        "in": "query",
+                        "schema": {
+                            "type": "string"
+                        }
+                    },
+                    {
+                        "name": "to",
+                        "in": "query",
+                        "schema": {
+                            "type": "string"
+                        }
+                    },
+                    {
+                        "name": "pageSize",
+                        "in": "query",
+                        "schema": {
+                            "type": "integer"
+                        }
+                    },
+                    {
+                        "name": "pageIndex",
+                        "in": "query",
+                        "schema": {
+                            "type": "integer"
+                        }
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "Thành công"
+                    }
+                }
+            }
+        },
+        "/accounts/{accountNo}/corporate-action-history": {
+            "get": {
+                "summary": "Lấy lịch sử thực hiện quyền",
+                "parameters": [
+                    {
+                        "name": "accountNo",
+                        "in": "path",
+                        "required": true,
+                        "schema": {
+                            "type": "string"
+                        }
+                    },
+                    {
+                        "name": "symbol",
+                        "in": "query",
+                        "schema": {
+                            "type": "string"
+                        }
+                    },
+                    {
+                        "name": "caType",
+                        "in": "query",
+                        "schema": {
+                            "type": "string"
+                        }
+                    },
+                    {
+                        "name": "caStatus",
+                        "in": "query",
+                        "schema": {
+                            "type": "string"
+                        }
+                    },
+                    {
+                        "name": "pageIndex",
+                        "in": "query",
+                        "schema": {
+                            "type": "integer"
+                        }
+                    },
+                    {
+                        "name": "pageSize",
+                        "in": "query",
+                        "schema": {
+                            "type": "integer"
+                        }
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "Thành công"
+                    }
+                }
+            }
+        },
+        "/accounts/{accountNo}/ppse": {
+            "get": {
+                "summary": "Tính toán sức mua / sức bán (PPSE)",
+                "parameters": [
+                    {
+                        "name": "accountNo",
+                        "in": "path",
+                        "required": true,
+                        "schema": {
+                            "type": "string"
+                        }
+                    },
+                    {
+                        "name": "marketType",
+                        "in": "query",
+                        "required": true,
+                        "schema": {
+                            "type": "string"
+                        }
+                    },
+                    {
+                        "name": "symbol",
+                        "in": "query",
+                        "required": true,
+                        "schema": {
+                            "type": "string"
+                        }
+                    },
+                    {
+                        "name": "price",
+                        "in": "query",
+                        "required": true,
+                        "schema": {
+                            "type": "string"
+                        }
+                    },
+                    {
+                        "name": "loanPackageId",
+                        "in": "query",
+                        "required": true,
+                        "schema": {
+                            "type": "string"
+                        }
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "Thành công"
+                    }
+                }
+            }
+        },
+        "/accounts/orders": {
+            "post": {
+                "summary": "Đặt lệnh giao dịch mới",
+                "parameters": [
+                    {
+                        "name": "marketType",
+                        "in": "query",
+                        "required": true,
+                        "schema": {
+                            "type": "string"
+                        }
+                    },
+                    {
+                        "name": "orderCategory",
+                        "in": "query",
+                        "schema": {
+                            "type": "string",
+                            "default": "NORMAL"
+                        }
+                    },
+                    {
+                        "name": "trading-token",
+                        "in": "header",
+                        "required": true,
+                        "schema": {
+                            "type": "string"
+                        }
+                    }
+                ],
+                "requestBody": {
+                    "required": true,
+                    "content": {
+                        "application/json": {
+                            "schema": {
+                                "type": "object",
+                                "properties": {
+                                    "accountNo": {
+                                        "type": "string"
+                                    },
+                                    "symbol": {
+                                        "type": "string"
+                                    },
+                                    "side": {
+                                        "type": "string"
+                                    },
+                                    "orderType": {
+                                        "type": "string"
+                                    },
+                                    "price": {
+                                        "type": "number"
+                                    },
+                                    "quantity": {
+                                        "type": "integer"
+                                    },
+                                    "loanPackageId": {
+                                        "type": "integer"
+                                    }
+                                }
+                            }
+                        }
+                    }
+                },
+                "responses": {
+                    "201": {
+                        "description": "Thành công"
+                    }
+                }
+            }
+        },
+        "/brokers/accounts/care-by": {
+            "get": {
+                "summary": "Lấy danh sách tài khoản được quản lý bởi Broker (Care-by)",
+                "responses": {
+                    "200": {
+                        "description": "Thành công"
+                    }
+                }
+            }
+        },
+        "/price/{symbol}/secdef": {
+            "get": {
+                "summary": "Lấy định nghĩa chứng khoán",
+                "parameters": [
+                    {
+                        "name": "symbol",
+                        "in": "path",
+                        "required": true,
+                        "schema": {
+                            "type": "string"
+                        }
+                    },
+                    {
+                        "name": "boardId",
+                        "in": "query",
+                        "schema": {
+                            "type": "string"
+                        }
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "Thành công"
+                    }
+                }
+            }
+        },
+        "/price/ohlc": {
+            "get": {
+                "summary": "Lấy dữ liệu đồ thị nến (OHLC)",
+                "parameters": [
+                    {
+                        "name": "type",
+                        "in": "query",
+                        "required": true,
+                        "schema": {
+                            "type": "string"
+                        }
+                    },
+                    {
+                        "name": "symbol",
+                        "in": "query",
+                        "required": true,
+                        "schema": {
+                            "type": "string"
+                        }
+                    },
+                    {
+                        "name": "resolution",
+                        "in": "query",
+                        "required": true,
+                        "schema": {
+                            "type": "string"
+                        }
+                    },
+                    {
+                        "name": "from",
+                        "in": "query",
+                        "required": true,
+                        "schema": {
+                            "type": "integer"
+                        }
+                    },
+                    {
+                        "name": "to",
+                        "in": "query",
+                        "required": true,
+                        "schema": {
+                            "type": "integer"
+                        }
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "Thành công"
+                    }
+                }
+            }
+        },
+        "/price/{symbol}/trades": {
+            "get": {
+                "summary": "Lấy danh sách các giao dịch lịch sử của mã chứng khoán",
+                "parameters": [
+                    {
+                        "name": "symbol",
+                        "in": "path",
+                        "required": true,
+                        "schema": {
+                            "type": "string"
+                        }
+                    },
+                    {
+                        "name": "boardId",
+                        "in": "query",
+                        "schema": {
+                            "type": "string"
+                        }
+                    },
+                    {
+                        "name": "from",
+                        "in": "query",
+                        "schema": {
+                            "type": "integer"
+                        }
+                    },
+                    {
+                        "name": "to",
+                        "in": "query",
+                        "schema": {
+                            "type": "integer"
+                        }
+                    },
+                    {
+                        "name": "limit",
+                        "in": "query",
+                        "schema": {
+                            "type": "integer"
+                        }
+                    },
+                    {
+                        "name": "order",
+                        "in": "query",
+                        "schema": {
+                            "type": "string"
+                        }
+                    },
+                    {
+                        "name": "nextPageToken",
+                        "in": "query",
+                        "schema": {
+                            "type": "string"
+                        }
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "Thành công"
+                    }
+                }
+            }
+        },
+        "/price/{symbol}/quotes": {
+            "get": {
+                "summary": "Lấy lịch sử dữ liệu giá chào mua/chào bán (Quotes Book)",
+                "parameters": [
+                    {
+                        "name": "symbol",
+                        "in": "path",
+                        "required": true,
+                        "schema": {
+                            "type": "string"
+                        }
+                    },
+                    {
+                        "name": "boardId",
+                        "in": "query",
+                        "schema": {
+                            "type": "string"
+                        }
+                    },
+                    {
+                        "name": "from",
+                        "in": "query",
+                        "schema": {
+                            "type": "integer"
+                        }
+                    },
+                    {
+                        "name": "to",
+                        "in": "query",
+                        "schema": {
+                            "type": "integer"
+                        }
+                    },
+                    {
+                        "name": "limit",
+                        "in": "query",
+                        "schema": {
+                            "type": "integer"
+                        }
+                    },
+                    {
+                        "name": "order",
+                        "in": "query",
+                        "schema": {
+                            "type": "string"
+                        }
+                    },
+                    {
+                        "name": "nextPageToken",
+                        "in": "query",
+                        "schema": {
+                            "type": "string"
+                        }
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "Thành công"
+                    }
+                }
+            }
+        },
+        "/price/{symbol}/trades/latest": {
+            "get": {
+                "summary": "Lấy thông tin khớp lệnh mới nhất",
+                "parameters": [
+                    {
+                        "name": "symbol",
+                        "in": "path",
+                        "required": true,
+                        "schema": {
+                            "type": "string"
+                        }
+                    },
+                    {
+                        "name": "boardId",
+                        "in": "query",
+                        "schema": {
+                            "type": "string"
+                        }
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "Thành công"
+                    }
+                }
+            }
+        },
+        "/price/{symbol}/quotes/latest": {
+            "get": {
+                "summary": "Lấy thông tin giá chào mua/chào bán mới nhất",
+                "parameters": [
+                    {
+                        "name": "symbol",
+                        "in": "path",
+                        "required": true,
+                        "schema": {
+                            "type": "string"
+                        }
+                    },
+                    {
+                        "name": "boardId",
+                        "in": "query",
+                        "schema": {
+                            "type": "string"
+                        }
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "Thành công"
+                    }
+                }
+            }
+        },
+        "/price/{symbol}/close": {
+            "get": {
+                "summary": "Lấy giá đóng cửa gần nhất (Get Close Price)",
+                "description": "Tra cứu mức giá đóng cửa chính thức gần nhất của một mã chứng khoán cụ thể.",
+                "parameters": [
+                    {
+                        "name": "symbol",
+                        "in": "path",
+                        "required": true,
+                        "schema": {
+                            "type": "string"
+                        },
+                        "description": "Mã chứng khoán (Ví dụ: GAS)"
+                    },
+                    {
+                        "name": "boardId",
+                        "in": "query",
+                        "required": false,
+                        "schema": {
+                            "type": "string"
+                        },
+                        "description": "Mã bảng điện tử"
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "Thành công. Trả về thông tin mức giá đóng cửa."
+                    }
+                }
+            }
+        },
+        "/instruments": {
+            "get": {
+                "summary": "Lấy danh sách công cụ/mã chứng khoán khả dụng cùng thông tin metadata",
+                "parameters": [
+                    {
+                        "name": "symbol",
+                        "in": "query",
+                        "schema": {
+                            "type": "string"
+                        }
+                    },
+                    {
+                        "name": "marketId",
+                        "in": "query",
+                        "schema": {
+                            "type": "string"
+                        }
+                    },
+                    {
+                        "name": "securityGroupId",
+                        "in": "query",
+                        "schema": {
+                            "type": "string"
+                        }
+                    },
+                    {
+                        "name": "indexName",
+                        "in": "query",
+                        "schema": {
+                            "type": "string"
+                        }
+                    },
+                    {
+                        "name": "limit",
+                        "in": "query",
+                        "schema": {
+                            "type": "integer"
+                        }
+                    },
+                    {
+                        "name": "page",
+                        "in": "query",
+                        "schema": {
+                            "type": "integer"
+                        }
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "Thành công"
+                    }
+                }
+            }
+        },
+        "/market/working-dates": {
+            "get": {
+                "summary": "Lấy danh sách các ngày làm việc của thị trường",
+                "responses": {
+                    "200": {
+                        "description": "Thành công"
+                    }
+                }
+            }
+        },
+        "/registration/send-email-otp": {
+            "post": {
+                "summary": "Yêu cầu gửi mã OTP về Email",
+                "requestBody": {
+                    "content": {
+                        "application/json": {
+                            "schema": {
+                                "type": "object",
+                                "properties": {
+                                    "email": {
+                                        "type": "string"
+                                    },
+                                    "otpType": {
+                                        "type": "string",
+                                        "default": "email_otp"
+                                    }
+                                }
+                            }
+                        }
+                    }
+                },
+                "responses": {
+                    "200": {
+                        "description": "Thành công"
+                    }
+                }
+            }
+        },
+        "/registration/trading-token": {
+            "post": {
+                "summary": "Tạo Trading Token để đặt lệnh",
+                "requestBody": {
+                    "required": true,
+                    "content": {
+                        "application/json": {
+                            "schema": {
+                                "type": "object",
+                                "required": [
+                                    "otpType",
+                                    "passcode"
+                                ],
+                                "properties": {
+                                    "otpType": {
+                                        "type": "string"
+                                    },
+                                    "passcode": {
+                                        "type": "string"
+                                    }
+                                }
+                            }
+                        }
+                    }
+                },
+                "responses": {
+                    "200": {
+                        "description": "Thành công"
+                    }
+                }
+            }
+        },
+        "/accounts/{accountNo}/orders/{orderId}": {
+            "put": {
+                "summary": "Sửa/Thay thế một lệnh hiện có",
+                "parameters": [
+                    {
+                        "name": "accountNo",
+                        "in": "path",
+                        "required": true,
+                        "schema": {
+                            "type": "string"
+                        }
+                    },
+                    {
+                        "name": "orderId",
+                        "in": "path",
+                        "required": true,
+                        "schema": {
+                            "type": "string"
+                        }
+                    },
+                    {
+                        "name": "marketType",
+                        "in": "query",
+                        "required": true,
+                        "schema": {
+                            "type": "string"
+                        }
+                    },
+                    {
+                        "name": "orderCategory",
+                        "in": "query",
+                        "required": false,
+                        "schema": {
+                            "type": "string"
+                        }
+                    },
+                    {
+                        "name": "trading-token",
+                        "in": "header",
+                        "required": true,
+                        "schema": {
+                            "type": "string"
+                        }
+                    }
+                ],
+                "requestBody": {
+                    "required": true,
+                    "content": {
+                        "application/json": {
+                            "schema": {
+                                "type": "object",
+                                "properties": {
+                                    "price": {
+                                        "type": "number"
+                                    },
+                                    "quantity": {
+                                        "type": "integer"
+                                    }
+                                }
+                            }
+                        }
+                    }
+                },
+                "responses": {
+                    "200": {
+                        "description": "Sửa lệnh thành công"
+                    }
+                }
+            },
+            "delete": {
+                "summary": "Hủy một lệnh chưa khớp",
+                "parameters": [
+                    {
+                        "name": "accountNo",
+                        "in": "path",
+                        "required": true,
+                        "schema": {
+                            "type": "string"
+                        }
+                    },
+                    {
+                        "name": "orderId",
+                        "in": "path",
+                        "required": true,
+                        "schema": {
+                            "type": "string"
+                        }
+                    },
+                    {
+                        "name": "marketType",
+                        "in": "query",
+                        "required": true,
+                        "schema": {
+                            "type": "string"
+                        }
+                    },
+                    {
+                        "name": "orderCategory",
+                        "in": "query",
+                        "required": false,
+                        "schema": {
+                            "type": "string"
+                        }
+                    },
+                    {
+                        "name": "trading-token",
+                        "in": "header",
+                        "required": true,
+                        "schema": {
+                            "type": "string"
+                        }
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "Hủy lệnh thành công"
+                    }
+                }
+            },
+            "get": {
+                "summary": "Truy vấn chi tiết một đơn lệnh (Get Order Detail)",
+                "description": "Lấy thông tin chi tiết của một lệnh đặt trong ngày dựa trên ID lệnh.",
+                "parameters": [
+                    {
+                        "name": "accountNo",
+                        "in": "path",
+                        "required": true,
+                        "schema": {
+                            "type": "string"
+                        },
+                        "description": "Số tiểu khoản giao dịch"
+                    },
+                    {
+                        "name": "orderId",
+                        "in": "path",
+                        "required": true,
+                        "schema": {
+                            "type": "string"
+                        },
+                        "description": "Mã định danh lệnh cần tra cứu"
+                    },
+                    {
+                        "name": "marketType",
+                        "in": "query",
+                        "required": true,
+                        "schema": {
+                            "type": "string",
+                            "enum": [
+                                "STOCK",
+                                "DERIVATIVE"
+                            ]
+                        },
+                        "description": "Loại thị trường"
+                    },
+                    {
+                        "name": "orderCategory",
+                        "in": "query",
+                        "required": false,
+                        "schema": {
+                            "type": "string",
+                            "default": "NORMAL"
+                        },
+                        "description": "Danh mục phân loại lệnh (Ví dụ: NORMAL)"
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "Thành công. Trả về thông tin chi tiết lệnh.",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "$ref": "#/components/schemas/Order"
+                                }
+                            }
+                        }
+                    }
+                }
+            }
+        },
+        "/v1/stream": {
+            "get": {
+                "summary": "Kết nối WebSocket Stream",
+                "description": "Khởi tạo kết nối WebSocket stream để nhận cập nhật real-time về giá (quotes), giao dịch (ticks), nến (ohlc), thông tin lệnh và vị thế tài khoản.",
+                "parameters": [
+                    {
+                        "name": "encoding",
+                        "in": "query",
+                        "required": false,
+                        "schema": {
+                            "type": "string",
+                            "enum": [
+                                "json",
+                                "msgpack"
+                            ],
+                            "default": "json"
+                        },
+                        "description": "Định dạng mã hóa tin nhắn (JSON hoặc MessagePack)"
+                    }
+                ],
+                "responses": {
+                    "101": {
+                        "description": "Chuyển đổi giao thức thành công (Switching Protocols to WebSocket)"
+                    }
+                }
+            }
+        }
+    }
+}
