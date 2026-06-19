@@ -243,7 +243,7 @@
                             "properties": {
                                 "name": {
                                     "type": "string",
-                                    "description": "Tên kênh dữ liệu. Ví dụ: 'tick.G1.json', 'top_price.G1.json', 'ohlc.1.json', 'order.STOCK.json', 'position.STOCK.json'"
+                                    "description": "Tên kênh dữ liệu. Ví dụ: 'tick.G1.json', 'top_price.G1.json', 'ohlc.1.json', 'order.STOCK.json', 'position.STOCK.json', 'estimated_market_index.VN30.json'"
                                 },
                                 "symbols": {
                                     "type": "array",
@@ -1423,7 +1423,7 @@
         "/v1/stream": {
             "get": {
                 "summary": "Kết nối WebSocket Stream",
-                "description": "Khởi tạo kết nối WebSocket stream để nhận cập nhật real-time về giá (quotes), giao dịch (ticks), nến (ohlc), thông tin lệnh và vị thế tài khoản.",
+                "description": "Khởi tạo kết nối WebSocket stream để nhận cập nhật real-time về giá (quotes), giao dịch (ticks), nến (ohlc), chỉ số (market_index, estimated_market_index), thông tin lệnh và vị thế tài khoản.",
                 "parameters": [
                     {
                         "name": "encoding",

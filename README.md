@@ -169,4 +169,5 @@ Refer to the `examples/` directory for detailed runnable Go scripts matching the
   - `websocket_expected_price`: Subscribe to expected prices during auction sessions.
   - `websocket_foreign_investor`: Subscribe to foreign investor flows.
   - `websocket_market_index`: Subscribe to indices (e.g., `VN30`).
+  - `websocket_estimated_market_index`: Subscribe to estimated market indices (e.g., `VN30`).
   - `websocket_trading`: Subscribe to private account trading updates (orders, positions, account balance).

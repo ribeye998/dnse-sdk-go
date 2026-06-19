@@ -169,4 +169,5 @@ Xem thêm các kịch bản mẫu chi tiết tại thư mục `examples/` để 
   - `websocket_expected_price`: Lắng nghe giá dự kiến khớp trong phiên ATO/ATC.
   - `websocket_foreign_investor`: Lắng nghe giao dịch khối ngoại.
   - `websocket_market_index`: Lắng nghe thông số các chỉ số thị trường (e.g. `VN30`).
+  - `websocket_estimated_market_index`: Lắng nghe ước lượng các chỉ số thị trường (e.g. `VN30`).
   - `websocket_trading`: Lắng nghe biến động tài sản cá nhân (Lệnh giao dịch, Danh mục vị thế, Số dư tài khoản).

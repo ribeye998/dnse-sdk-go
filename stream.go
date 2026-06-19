@@ -49,6 +49,7 @@ type StreamClient struct {
 	onTickExtra          func(symbol string, data map[string]interface{}) // "te" — trade extra
 	onOHLC               func(symbol string, data map[string]interface{}) // "b"  — OHLC bar
 	onMarketIndex        func(data map[string]interface{})                // "mi" / "idx"
+	onEstimatedMarketIndex func(data map[string]interface{})              // "emi" — estimated market index
 	onForeign            func(symbol string, data map[string]interface{}) // "f"  — foreign investor
 	onExpectedPrice      func(symbol string, data map[string]interface{}) // "e" / "ep"
 	onSecurityDefinition func(symbol string, data map[string]interface{}) // "sd"
@@ -122,6 +123,11 @@ func (s *StreamClient) OnOHLC(fn func(symbol string, data map[string]interface{}
 // OnMarketIndex registers a handler for market index update messages (type code "mi"/"idx").
 func (s *StreamClient) OnMarketIndex(fn func(data map[string]interface{})) {
 	s.mu.Lock(); s.onMarketIndex = fn; s.mu.Unlock()
+}
+
+// OnEstimatedMarketIndex registers a handler for estimated market index update messages (type code "emi").
+func (s *StreamClient) OnEstimatedMarketIndex(fn func(data map[string]interface{})) {
+	s.mu.Lock(); s.onEstimatedMarketIndex = fn; s.mu.Unlock()
 }
 
 // OnForeign registers a handler for foreign investor flow messages (type code "f").
@@ -291,14 +297,15 @@ func (s *StreamClient) dispatchMap(msg map[string]interface{}) {
 	onQuote := s.onQuote
 	onTick := s.onTick
 	onTickExtra := s.onTickExtra
-	onOHLC := s.onOHLC
-	onMarketIndex := s.onMarketIndex
-	onForeign := s.onForeign
-	onExpectedPrice := s.onExpectedPrice
-	onSecDef := s.onSecurityDefinition
-	onOrderUpdate := s.onOrderUpdate
-	onPositionUpdate := s.onPositionUpdate
-	onAccountUpdate := s.onAccountUpdate
+	onOHLC               := s.onOHLC
+	onMarketIndex        := s.onMarketIndex
+	onEstimatedMarketIndex := s.onEstimatedMarketIndex
+	onForeign            := s.onForeign
+	onExpectedPrice      := s.onExpectedPrice
+	onSecDef             := s.onSecurityDefinition
+	onOrderUpdate        := s.onOrderUpdate
+	onPositionUpdate     := s.onPositionUpdate
+	onAccountUpdate      := s.onAccountUpdate
 	s.mu.Unlock()
 
 	switch msgType {
@@ -321,6 +328,10 @@ func (s *StreamClient) dispatchMap(msg map[string]interface{}) {
 	case "mi", "idx":
 		if onMarketIndex != nil {
 			onMarketIndex(msg)
+		}
+	case "emi":
+		if onEstimatedMarketIndex != nil {
+			onEstimatedMarketIndex(msg)
 		}
 	case "f":
 		if onForeign != nil {

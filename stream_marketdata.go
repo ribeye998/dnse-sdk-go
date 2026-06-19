@@ -61,6 +61,11 @@ func ChanForeign(board, encoding string) string { return chanName("foreign", boa
 // Passing index names inside symbols silences the feed.
 func ChanMarketIndex(index, encoding string) string { return chanName("market_index", index, encoding) }
 
+// ChanEstimatedMarketIndex returns the estimated market index channel name.
+func ChanEstimatedMarketIndex(index, encoding string) string {
+	return chanName("estimated_market_index", index, encoding)
+}
+
 // ChanOHLC returns the real-time (open) OHLC candlestick channel name.
 // resolution examples: "1" (1-minute), "5", "15", "60", "D".
 func ChanOHLC(resolution, encoding string) string { return chanName("ohlc", resolution, encoding) }
@@ -106,6 +111,15 @@ func (s *StreamClient) SubscribeMarketIndex(indices []string, encoding string) e
 	channels := make(map[string][]string, len(indices))
 	for _, idx := range indices {
 		channels[ChanMarketIndex(idx, encoding)] = []string{} // symbols MUST be empty
+	}
+	return s.Subscribe(channels)
+}
+
+// SubscribeEstimatedMarketIndex subscribes to one or more estimated market index channels.
+func (s *StreamClient) SubscribeEstimatedMarketIndex(indices []string, encoding string) error {
+	channels := make(map[string][]string, len(indices))
+	for _, idx := range indices {
+		channels[ChanEstimatedMarketIndex(idx, encoding)] = []string{} // symbols MUST be empty
 	}
 	return s.Subscribe(channels)
 }
