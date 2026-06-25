@@ -7,14 +7,13 @@ import (
 
 // Board IDs used in WebSocket channel names.
 const (
-	BoardG1          = "G1"  // Round-lot, primary HOSE/HNX board (lots of 10)
-	BoardG3          = "G3"  // PLO put-through after close (lots of 10)
-	BoardG4          = "G4"  // Odd-lot 1–99 shares (absolute shares, no ×10 scaling)
-	BoardT1          = "T1"  // Put-through round-lot 09:00–14:45
-	BoardT3          = "T3"  // Put-through round-lot 14:45–15:00
-	BoardT4          = "T4"  // Put-through odd-lot 09:00–14:45 (absolute shares)
-	BoardT6          = "T6"  // Put-through odd-lot 14:45–15:00 (absolute shares)
-	BoardAll         = "AL"  // Wildcard: subscribe to all boards at once
+	BoardG1 = "G1" // Round-lot, primary HOSE/HNX board (lots of 10)
+	BoardG3 = "G3" // PLO put-through after close (lots of 10)
+	BoardG4 = "G4" // Odd-lot 1–99 shares (absolute shares, no ×10 scaling)
+	BoardT1 = "T1" // Put-through round-lot 09:00–14:45
+	BoardT3 = "T3" // Put-through round-lot 14:45–15:00
+	BoardT4 = "T4" // Put-through odd-lot 09:00–14:45 (absolute shares)
+	BoardT6 = "T6" // Put-through odd-lot 14:45–15:00 (absolute shares)
 )
 
 // OHLC resolution constants for stream and REST.

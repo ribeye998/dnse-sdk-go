@@ -231,15 +231,19 @@ func (s *StreamClient) Connect() error {
 // Close gracefully shuts down the WebSocket connection.
 func (s *StreamClient) Close() {
 	s.mu.Lock()
-	defer s.mu.Unlock()
 	s.isClosing = true
-	if s.conn != nil {
-		_ = s.conn.WriteMessage(
+	conn := s.conn
+	s.conn = nil
+	s.mu.Unlock()
+
+	if conn != nil {
+		s.writeMu.Lock()
+		_ = conn.WriteMessage(
 			gorilla.CloseMessage,
 			gorilla.FormatCloseMessage(gorilla.CloseNormalClosure, ""),
 		)
-		s.conn.Close()
-		s.conn = nil
+		s.writeMu.Unlock()
+		conn.Close()
 	}
 }
 

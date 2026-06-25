@@ -143,3 +143,12 @@ func buildTradeQuery(p TradeHistoryParams) url.Values {
 	}
 	return q
 }
+
+// GetForeignTrading returns historical foreign trading data for a symbol.
+func (c *Client) GetForeignTrading(ctx context.Context, symbol string, p TradeHistoryParams) (json.RawMessage, error) {
+	path := fmt.Sprintf("/price/%s/foreign-trading", symbol)
+	q := buildTradeQuery(p)
+	var result json.RawMessage
+	return result, c.sendRequest(ctx, http.MethodGet, path, q, nil, &result)
+}
+
