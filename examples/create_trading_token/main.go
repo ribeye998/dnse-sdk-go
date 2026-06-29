@@ -17,8 +17,8 @@ func main() {
 
 	client := dnse.NewClient(cfg.BaseURL, cfg.APIKey, cfg.APISecret)
 
-	// otpType can be "PIN" or "OTP"
-	otpType := "PIN"
+	// otpType can be "smart_otp" or "email_otp"
+	otpType := "smart_otp"
 	passcode := "123456"
 
 	token, err := client.CreateTradingToken(context.Background(), otpType, passcode)

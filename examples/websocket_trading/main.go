@@ -23,18 +23,18 @@ func main() {
 		log.Fatal("set DNSE_ACCOUNT_ID in your .env file")
 	}
 
-	pin := os.Getenv("DNSE_PIN")
-	if pin == "" {
-		fmt.Print("Enter PIN: ")
-		_, err := fmt.Scanln(&pin)
+	passcode := os.Getenv("DNSE_PASSCODE")
+	if passcode == "" {
+		fmt.Print("Enter Smart OTP/Passcode: ")
+		_, err := fmt.Scanln(&passcode)
 		if err != nil {
-			log.Fatalf("read PIN: %v", err)
+			log.Fatalf("read passcode: %v", err)
 		}
 	}
 
 	// 1. Get Trading Token first via REST Client
 	restClient := dnse.NewClient(cfg.BaseURL, cfg.APIKey, cfg.APISecret)
-	token, err := restClient.CreateTradingToken(context.Background(), "smart_otp", pin)
+	token, err := restClient.CreateTradingToken(context.Background(), "smart_otp", passcode)
 	if err != nil {
 		log.Fatalf("CreateTradingToken: %v", err)
 	}

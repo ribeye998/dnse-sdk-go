@@ -5,7 +5,7 @@ An open-source Go SDK for connecting and interacting with the DNSE Securities Op
 ## Key Features
 
 - **REST Client (`dnse.Client`)**: 
-  - Authenticate and request/renew a `Trading Token` using Smart OTP or PIN.
+  - Authenticate and request/renew a `Trading Token` using smart_otp or email_otp.
   - Query trading sub-accounts list and detailed asset balances.
   - Retrieve security definitions (Ceiling/Floor/Reference prices) and margin loan packages.
   - Calculate buying and selling power (`PPSE`) before placing an order.

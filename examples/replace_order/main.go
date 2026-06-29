@@ -23,18 +23,18 @@ func main() {
 
 	client := dnse.NewClient(cfg.BaseURL, cfg.APIKey, cfg.APISecret)
 
-	pin := os.Getenv("DNSE_PIN")
-	if pin == "" {
-		fmt.Print("Enter PIN: ")
-		_, err := fmt.Scanln(&pin)
+	passcode := os.Getenv("DNSE_PASSCODE")
+	if passcode == "" {
+		fmt.Print("Enter Smart OTP/Passcode: ")
+		_, err := fmt.Scanln(&passcode)
 		if err != nil {
-			log.Fatalf("read PIN: %v", err)
+			log.Fatalf("read passcode: %v", err)
 		}
 	}
 
 	ctx := context.Background()
 
-	token, err := client.CreateTradingToken(ctx, "smart_otp", string(pin))
+	token, err := client.CreateTradingToken(ctx, "smart_otp", passcode)
 	if err != nil {
 		log.Fatalf("CreateTradingToken: %v", err)
 	}

@@ -8,8 +8,8 @@ import (
 	"net/url"
 )
 
-// CreateTradingToken requests a trading token via PIN or OTP authentication.
-// otpType is "PIN" or "OTP"; passcode is the 6-digit value.
+// CreateTradingToken requests a trading token via smart_otp or email_otp authentication.
+// otpType is the authentication type ("smart_otp" or "email_otp"); passcode is the value.
 // The token is stored automatically on the client for subsequent calls.
 func (c *Client) CreateTradingToken(ctx context.Context, otpType, passcode string) (string, error) {
 	payload := map[string]string{"otpType": otpType, "passcode": passcode}

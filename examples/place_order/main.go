@@ -26,17 +26,17 @@ func main() {
 
 	token := os.Getenv("DNSE_TRADING_TOKEN")
 	if token == "" {
-		pin := os.Getenv("DNSE_PIN")
-		if pin == "" {
-			fmt.Print("Enter PIN: ")
-			_, err := fmt.Scanln(&pin)
+		passcode := os.Getenv("DNSE_PASSCODE")
+		if passcode == "" {
+			fmt.Print("Enter Smart OTP/Passcode: ")
+			_, err := fmt.Scanln(&passcode)
 			if err != nil {
-				log.Fatalf("read PIN: %v", err)
+				log.Fatalf("read passcode: %v", err)
 			}
 		}
 
 		var err error
-		token, err = client.CreateTradingToken(ctx, "smart_otp", pin)
+		token, err = client.CreateTradingToken(ctx, "smart_otp", passcode)
 		if err != nil {
 			log.Fatalf("CreateTradingToken: %v", err)
 		}
